@@ -11,6 +11,10 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -20,8 +24,8 @@ import javax.swing.JPanel;
 
 @SuppressWarnings("serial")
 public class GridPanel extends JPanel{
-	private int viewableWidth;
-	private int viewableHeight;
+	private int viewableCellX;
+	private int viewableCellY;
 	
 	private int topLeftX;
 	private int topLeftY;
@@ -45,12 +49,13 @@ public class GridPanel extends JPanel{
 	private double zoom_factor = 1.0;
 	
 	boolean isPaused = false;
+	boolean grid = false;
 	
 	public GridPanel(int viewableWidth,int viewableHeight,int pixelWidth,int pixelHeight,int cellSize,int topLeftX,int topLeftY) {
 		super(null);
 		setLayout(null);
-		this.viewableWidth = viewableWidth;
-		this.viewableHeight = viewableHeight;
+		this.viewableCellX = viewableWidth;
+		this.viewableCellY = viewableHeight;
 		this.pixelHeight = pixelHeight;
 		this.pixelWidth = pixelWidth;
 		this.topLeftX = topLeftX;
@@ -62,13 +67,49 @@ public class GridPanel extends JPanel{
 		this.addMouseMotionListener(new MouseMotionGrid());
 		this.addMouseWheelListener(new MouseWheelGrid());
 		this.addKeyListener(new keyPressGrid());
-		this.addMouseListener(new MouseClickGrid());
 		this.setFocusable(true);
 	}
 	
+	public void initialize() {
+		/*liveCell.put(new Point(20,10), 1);
+		liveCell.put(new Point(20,11), 1);
+		liveCell.put(new Point(20,12), 1);
+		liveCell.put(new Point(21,10), 1);
+		liveCell.put(new Point(19,11), 1);
+		liveCell.put(new Point(7,4), 1);
+		liveCell.put(new Point(8,4), 1);
+		liveCell.put(new Point(9,4), 1); */
+		
+		BufferedReader reader = null;
+		try {
+			reader = new BufferedReader(new FileReader("/home/ayan/eclipse-workspace/GameOfLife/input.txt"));
+		}catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return;
+		}
+		
+		String line;
+		try {
+			line = reader.readLine();
+			while (line != null) {
+				String[] inputArr = line.split(",");
+				int x = Integer.parseInt(inputArr[0]);
+				int y = Integer.parseInt(inputArr[1]);
+				liveCell.put(new Point(x,y), 1);
+				
+				// read next line
+				line = reader.readLine(); 
+			}
+			reader.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
 	public synchronized void resetGrid()
 	{	
-		gridViewable = new Cell[viewableHeight+2][viewableWidth+2];
+		gridViewable = new Cell[viewableCellY+2][viewableCellX+2];
 		
 		gridLock.writeLock().lock();
 		try {
@@ -78,9 +119,9 @@ public class GridPanel extends JPanel{
 			gridLock.writeLock().unlock();
 		}
 		
-		for(int i=0;i<viewableHeight+2;i++)
+		for(int i=0;i<viewableCellY+2;i++)
 		{
-			for(int j=0;j<viewableWidth+2;j++)
+			for(int j=0;j<viewableCellX+2;j++)
 			{	
 				Cell cell = new Cell(topLeftX+j,topLeftY+i);
 				gridViewable[i][j] = cell;
@@ -98,9 +139,9 @@ public class GridPanel extends JPanel{
 		g2.setBackground(Color.BLACK);
 		g2.fillRect(0, 0, pixelWidth, pixelHeight);
 		
-		for(int i=0;i<viewableHeight+2;i++)
+		for(int i=0;i<viewableCellY+2;i++)
 		{
-			for(int j=0;j<viewableWidth+2;j++)
+			for(int j=0;j<viewableCellX+2;j++)
 			{
 				Cell cell = gridViewable[i][j];
 				if(cell.isLive())
@@ -108,8 +149,10 @@ public class GridPanel extends JPanel{
 					g2.setColor(cell.getColor());
 					g2.fillRect(j*cellSize, i*cellSize, cellSize, cellSize);
 				}
-				g2.setColor(Color.GRAY);
-				g2.drawRect(j*cellSize, i*cellSize, cellSize, cellSize);
+				if(grid) {
+					g2.setColor(Color.GRAY);
+					g2.drawRect(j*cellSize, i*cellSize, cellSize, cellSize);
+				}
 			}
 		}
 		
@@ -117,9 +160,9 @@ public class GridPanel extends JPanel{
 	
 	public synchronized void updateGrid()
 	{	
-		for(int i=0;i<viewableHeight+2;i++)
+		for(int i=0;i<viewableCellY+2;i++)
 		{
-			for(int j=0;j<viewableWidth+2;j++)
+			for(int j=0;j<viewableCellX+2;j++)
 			{
 				Point coordinate = new Point(topLeftX+j,topLeftY+i);
 				Cell cell = gridViewable[i][j];
@@ -173,8 +216,6 @@ public class GridPanel extends JPanel{
 	{	
 		int coordinateX = (mx/cellSize)+ topLeftX;
 		int coordinateY = (my/cellSize)+topLeftY;
-		System.out.println(coordinateX);
-		System.out.println(coordinateY);
 		liveCell.put(new Point(coordinateX,coordinateY), 1);
 		updateGrid();
 		
@@ -230,8 +271,8 @@ public class GridPanel extends JPanel{
 		topLeftX = topLeftX - (newCellRelativeX - oldCellRelativeX);
 		topLeftY = topLeftY - (newCellRelativeY - oldCellRelativeY);
 		
-		viewableWidth = pixelWidth/newCellSize;
-		viewableHeight = pixelHeight/newCellSize;
+		viewableCellX = pixelWidth/newCellSize;
+		viewableCellY = pixelHeight/newCellSize;
 		
 		cellSize = newCellSize;
 		
@@ -243,10 +284,10 @@ public class GridPanel extends JPanel{
 	
 	public void remakeView()
 	{
-		gridViewable = new Cell[viewableHeight+2][viewableWidth+2];
-		for(int i=0;i<viewableHeight+2;i++)
+		gridViewable = new Cell[viewableCellY+2][viewableCellX+2];
+		for(int i=0;i<viewableCellY+2;i++)
 		{
-			for(int j=0;j<viewableWidth+2;j++)
+			for(int j=0;j<viewableCellX+2;j++)
 			{
 				Point coordinate = new Point(topLeftX+j,topLeftY+i);
 				Cell cell = new Cell(topLeftX+j,topLeftY+i);
@@ -279,14 +320,18 @@ public class GridPanel extends JPanel{
 		public void keyPressed(KeyEvent e) {
 			// TODO Auto-generated method stub
 			
-			if(e.getKeyCode() == KeyEvent.VK_SPACE && !isPaused) {
-		        System.out.println("Pressed");
-		        isPaused = true;
-		    } 
-			else if(e.getKeyCode() == KeyEvent.VK_SPACE && isPaused) {
-				System.out.println("Pressed");
-		        isPaused = false;
-		    }
+			if(e.getKeyCode() == KeyEvent.VK_SPACE) {
+				isPaused = !isPaused;
+			}
+		        
+			if(e.getKeyCode()== KeyEvent.VK_ESCAPE) {
+				resetGrid();
+				initialize();
+			}
+			
+			if(e.getKeyCode()== KeyEvent.VK_G) {
+				grid = !grid;
+			}
 		}
 
 		@Override
@@ -296,43 +341,6 @@ public class GridPanel extends JPanel{
 		}
 		
 	}
-	
-	private class MouseClickGrid implements MouseListener{
 
-		@Override
-		public void mouseClicked(MouseEvent e) {
-			// TODO Auto-generated method stub
-			System.out.println("clicked");
-			mouseX = e.getX();
-			mouseY = e.getY();
-			addCell(mouseX,mouseY);
-		}
-
-		@Override
-		public void mousePressed(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
-			
-		}
-
-		@Override
-		public void mouseReleased(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public void mouseEntered(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public void mouseExited(MouseEvent e) {
-			// TODO Auto-generated method stub
-			
-		}
-		
-	}
 	
 }

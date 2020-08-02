@@ -1,7 +1,5 @@
 package game;
 
-import java.awt.EventQueue;
-
 public class Main {
 	
 	public static void main(String[] args){
@@ -24,14 +22,8 @@ public class Main {
 					//i++;
 					if(!gFrame.gPanel.isPaused) {
 							gFrame.nexState();
-							//gFrame.gPanel.updateGrid();
-							//gFrame.gPanel.repaint();
-							EventQueue.invokeLater(new Runnable() {
-								public void run() {
-									gFrame.gPanel.updateGrid();
-									gFrame.gPanel.repaint();
-								}
-							});
+							gFrame.gPanel.updateGrid();
+							gFrame.gPanel.repaint();
 					}
 				}
 			}

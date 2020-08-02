@@ -17,7 +17,7 @@ public class GameFrame extends JFrame{
 	Dimension screensize=Toolkit.getDefaultToolkit().getScreenSize();
 	int screenHeight=screensize.height;
 	int screenWidth=screensize.width;
-	int k=0;
+	
 	public GameFrame() {
 		super("Game of Life");
 		setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -26,26 +26,14 @@ public class GameFrame extends JFrame{
 		add(gPanel,BorderLayout.CENTER);
 		//setBounds(0,0,screenWidth,screenHeight);
 		this.setMinimumSize(new Dimension(gPanel.pixelWidth, gPanel.pixelHeight));
-		initialize();
+		gPanel.initialize();
 		pack();
 		setVisible(true);
 	}
-	
-	public void initialize() {
-		gPanel.liveCell.put(new Point(20,10), 1);
-		gPanel.liveCell.put(new Point(20,11), 1);
-		gPanel.liveCell.put(new Point(20,12), 1);
-		gPanel.liveCell.put(new Point(21,10), 1);
-		gPanel.liveCell.put(new Point(19,11), 1);
-		gPanel.liveCell.put(new Point(7,4), 1);
-		gPanel.liveCell.put(new Point(8,4), 1);
-		gPanel.liveCell.put(new Point(9,4), 1); 
-		
-	}
+
 	
 	public synchronized void nexState()
-	{	k++;
-		//System.out.println(k);
+	{	
 		ArrayList<Point> live = new ArrayList<Point>();
 		ArrayList<Point> dead = new ArrayList<Point>();
 		HashMap<Point,Integer> candidates = new HashMap<Point,Integer>();
