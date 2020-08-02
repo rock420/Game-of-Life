@@ -17,12 +17,10 @@ For this implementation 8 neighbour cell is considered where a cell is a block i
 
 
 ## GUI Introduction
-The GUI will show the evaluation of the cell through generation. <br>
-<figure class="video_container">
- <video controls="true" >
-    <source src="./images/demo.mp4" type="video/mp4">
- </video>
-</figure>
+The GUI will show the evaluation of the cell through generation. <br> 
+
+![](./images/img1.png)
+![](./images/img2.png)
 
 - shift+drag to move the screen
 - shift+scroll to zoom in or out
